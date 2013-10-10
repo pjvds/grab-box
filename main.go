@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	//"path/filepath"
+	"encoding/json"
 	"os/exec"
 )
 
@@ -28,12 +29,26 @@ func main() {
 	if archiveFilename == nil || *archiveFilename == "" {
 		fmt.Println("What is the username/boxname of the box?")
 
-		var boxurl string
-		if _, err := fmt.Scanln(&boxurl); err != nil {
+		var slug string
+		if _, err := fmt.Scanln(&slug); err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println("")
 
+		metaUrl := fmt.Sprintf("https://app.wercker.com/api/v2/boxes/%v/*", slug)
+		response, err := http.Get(metaUrl)
+		if err != nil {
+			print("Unable to create response for url: %v", err)
+		}
+		defer response.Body.Close()
+
+		var metaDoc map[string]interface{}
+		decoder := json.NewDecoder(response.Body)
+		if err := decoder.Decode(&metaDoc); err != nil {
+			print("Unable to decode meta data response: %v", err)
+		}
+
+		boxurl := metaDoc["tarballUrl"].(string)
 		filename, err := downloadBox(boxurl)
 		if err != nil {
 			log.Fatal(err)
