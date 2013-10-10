@@ -24,6 +24,14 @@ var boxName = flag.String("name", "", "The name of the box.")
 func main() {
 	flag.Parse()
 
+	uid := os.Getuid()
+	euid := os.Geteuid()
+
+	if uid != 0 || euid != 0 {
+		println("grab-box not started with root privileges. Please run grab-box as root.")
+		return
+	}
+
 	fmt.Println("Welcome to grab-box\n")
 
 	if archiveFilename == nil || *archiveFilename == "" {
